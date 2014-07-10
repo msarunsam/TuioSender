@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include "TuioContainer.h"
+#include <iostream>
 
 namespace TUIO {
 	
@@ -42,7 +43,7 @@ namespace TUIO {
 		int cursor_id;
 		int miss_counter;
 		int hit_counter;
-		int counter;
+		int frame_counter;
 		
 	public:
 		/**
@@ -55,8 +56,13 @@ namespace TUIO {
 		 * @param	xp	the X coordinate to assign
 		 * @param	yp	the Y coordinate to assign
 		 */
-		TuioCursor (TuioTime ttime, long si, int ci, float xp, float yp):TuioContainer(ttime,si,xp,yp), miss_counter(-1) {
-			cursor_id = ci;
+		TuioCursor (TuioTime ttime, long si, int ci, float xp, float yp):
+			TuioContainer(ttime,si,xp,yp),
+			cursor_id(ci),
+			miss_counter(-1),
+			hit_counter(-1),
+			frame_counter(-1)
+		{
 		};
 
 		/**
@@ -68,8 +74,13 @@ namespace TUIO {
 		 * @param	xp	the X coordinate to assign
 		 * @param	yp	the Y coordinate to assign
 		 */
-		TuioCursor (long si, int ci, float xp, float yp):TuioContainer(si,xp,yp), miss_counter(-1) {
-			cursor_id = ci;
+		TuioCursor (long si, int ci, float xp, float yp):
+			TuioContainer(si,xp,yp),
+			cursor_id(ci),
+			miss_counter(-1),
+			hit_counter(-1),
+			frame_counter(-1)
+		{
 		};
 		
 		/**
@@ -78,8 +89,13 @@ namespace TUIO {
 		 *
 		 * @param	tcur	the TuioCursor to assign
 		 */
-		TuioCursor (TuioCursor *tcur):TuioContainer(tcur), miss_counter(-1) {
-			cursor_id = tcur->getCursorID();
+		TuioCursor (TuioCursor *tcur):
+			TuioContainer(tcur),
+			cursor_id(tcur->getCursorID()),
+			miss_counter(-1),
+			hit_counter(-1),
+			frame_counter(-1)
+		{
 		};
 		
 
@@ -101,7 +117,7 @@ namespace TUIO {
 			++miss_counter;
 		};
 
-		int getMissCounter()
+		int getMissCounter() const
 		{
 			return miss_counter;
 		};
@@ -115,7 +131,7 @@ namespace TUIO {
 			++hit_counter;
 		};
 
-		int getHitCounter()
+		int getHitCounter() const
 		{
 			return hit_counter;
 		};
@@ -124,18 +140,18 @@ namespace TUIO {
 			hit_counter = -1;
 		};
 
-		void incrementCounter()
+		void incrementFrameCounter()
 		{
-			++counter;
+			++frame_counter;
 		};
 
-		int getCounter()
+		int getFrameCounter() const
 		{
-			return counter;
+			return frame_counter;
 		};
 
-		void resetCounter(){
-			counter = -1;
+		void resetFrameCounter(){
+			frame_counter = -1;
 		};
 
 	};

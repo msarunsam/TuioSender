@@ -26,8 +26,9 @@
 #include "TuioCursor.h"
 #include <list>
 #include <deque>
-#include <map>
+#include <set>
 #include <math.h>
+#include <opencv2/opencv.hpp>
  
 using namespace TUIO;
 
@@ -39,7 +40,10 @@ public:
 	~TUIOSender() {
 		delete m_tuioServer;
 	};
+
+	void drawEllipses(cv::Mat& img) const;
 	
+	void initFrame();
 	void addTuioCursor(float const& x, float const& y);
 	void cleanCursors();
 	void updateCursors();
@@ -49,12 +53,15 @@ public:
 	TuioServer *m_tuioServer;
 
 	std::deque<std::pair<float, float>> m_newTuioPoints;
-	std::list<TuioCursor> m_temp;
+	std::vector<TuioCursor> m_temp;
 
-	std::map<int, TuioCursor*> m_TUIOCursorMap;
+	std::set<TuioCursor*> m_TUIOCursorMap;
 
 private:
-
+	const float COLLAPSE_THRESHOLD = .03;
+	const float COLLAPSE_THRESHOLD_EXISTING = .04;
+	const int STICKY_FRAMES        = 3;
+	const int FRAME_THRESHOLD      = 5;
 };
 
 #endif /* INCLUDED_TUIOSender_H */

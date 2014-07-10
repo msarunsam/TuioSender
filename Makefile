@@ -19,7 +19,7 @@ INCLUDES = -I./tuio -I./oscpack -I/opt/boost/boost_1_55_0/include -Ipng++-0.2.3/
 LDPATH = -L./opencv-touch/src -L/opt/boost/boost_1_55_0/lib
 LDFLAGS = -lBaumer -lrt -lboost_thread -ljpeg -lpng -lGL -lglut -lpthread -lbgapi \
           -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_imgproc -lopencv_video -lboost_system
-CFLAGS  = -fPIC -Wall -O3 $(SDL_CFLAGS) -DLINUX -D_GNULINUX
+CFLAGS  = -fPIC -Wall $(SDL_CFLAGS) -DLINUX -D_GNULINUX -g
 #CFLAGS  = -g -Wall -O3 $(SDL_CFLAGS)
 CXXFLAGS = $(CFLAGS) $(INCLUDES) -D$(ENDIANESS) -std=c++11
 SHARED_OPTIONS = -shared -Wl,-soname,$(TUIO_SHARED)

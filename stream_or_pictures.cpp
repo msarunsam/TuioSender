@@ -41,9 +41,9 @@ Rect bounding_rect;
 // mser values
 int _delta=1; 				// default: 1; 			good: 1 						[1; infinity]
 int _min_area=2; //600			// default: 60; 		good: 60 						[1; infinity]
-int _max_area=150; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
+int _max_area=80; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
 double _max_variation=.08; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
-double _min_diversity=.5;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
+double _min_diversity=.8;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
 
 //used only with colored images
 int _max_evolution=200;
@@ -63,14 +63,14 @@ bool is_bigger(RotatedRect box_1, RotatedRect box_2);
 
 
 //////// TUIOSENDER //////
-TUIOSender sender("perseus", 3333);
+TUIOSender sender("medusa", 3333);
 
 
 int main() {
 
 	/////////// STREAM //////////
 	if (SYSTEM_INPUT == 1) {
-		namedWindow("Stream", CV_WINDOW_AUTOSIZE);
+		//namedWindow("Stream", CV_WINDOW_AUTOSIZE);
 		//namedWindow("Ellipses", CV_WINDOW_AUTOSIZE );
 
 		pMOG = new BackgroundSubtractorMOG();
@@ -148,17 +148,21 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 
 ///////////////////////
 				// SET VIEW OF INTEREST
-				cvSetImageROI(frame, cvRect(250, 200, 950, 600));
+				cvSetImageROI(frame, cvRect(250, 200, 930, 600));
 				frameMat = Mat(frame);
 ///////////////////////
 
-				flip(frameMat, frameMat, 1);
+				//flip(frameMat, frameMat, 1);
 
 
 				frameMat = Mat(frame);
 
+
+
+
+
 				// show stream
-				cvShowImage("Stream", frame);
+				//cvShowImage("Stream", frame);
    
 		        if (char(key) == 27) { // ESC breaks the loop
 		            break;      
@@ -240,6 +244,10 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 					get_contours(frameMat);
 					mser_algo(frameMat);
 				}
+				else if (ALGORITHM == 3)
+				{
+					//blob_detection(frameMat)
+				}
 				else {
 					std::cout << "Error: invalide algorithm number" << std::endl;
 				}
@@ -248,6 +256,39 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 	    	}
 		}		
 	}
+}
+
+void blob_detection(Mat img)
+{
+	/*
+	// set up the parameters (check the defaults in opencv's code in blobdetector.cpp)
+	cv::SimpleBlobDetector::Params params;
+	params.minDistBetweenBlobs = 50.0f;
+	params.filterByInertia = false;
+	params.filterByConvexity = false;
+	params.filterByColor = false;
+	params.filterByCircularity = false;
+	params.filterByArea = true;
+	params.minArea = 20.0f;
+	params.maxArea = 500.0f;
+	// ... any other params you don't want default value
+
+	// set up and create the detector using the parameters
+	cv::Ptr<cv::FeatureDetector> blob_detector = new cv::SimpleBlobDetector(params);
+	blob_detector->create("SimpleBlob");
+
+	// detect!
+	vector<cv::KeyPoint> keypoints;
+	blob_detector->detect(image, keypoints);
+
+	// extract the x y coordinates of the keypoints: 
+
+	for (int i=0; i<keypoints.size(); i++){
+	    float X=keypoints[i].pt.x; 
+	    float Y=keypoints[i].pt.y;
+	}
+	*/
+
 }
 
 void get_contours(Mat img_cont) {
@@ -286,6 +327,9 @@ void get_contours(Mat img_cont) {
 void mser_algo(Mat temp_img)  {
 	vector<vector<Point> > contours;
 
+	sender.initFrame();
+	//sender.cleanCursors();
+
 	if (SYSTEM_INPUT == 0) {
 		cvtColor(temp_img, temp_img, CV_BGR2GRAY);
 	}
@@ -310,7 +354,6 @@ void mser_algo(Mat temp_img)  {
 			++skip_first_frame;
 		}
 	}
-	imshow( "Ellipses", ellipses);
 
 	//show contours
 	Mat cnt_img = Mat::zeros(temp_img.rows, temp_img.cols, CV_8UC3);
@@ -319,8 +362,10 @@ void mser_algo(Mat temp_img)  {
 
 	//++test1;
 	//std::cout << "Frame: " << test1 << std::endl;
-	sender.cleanCursors();
+	sender.updateCursors();
+	sender.drawEllipses(ellipses);
 	sender.sendCursors();
+	imshow( "Ellipses", ellipses);
 }
 
 void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
@@ -348,8 +393,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			if (min_r.size() > 0) {
 				for (int i = 0; i < int(min_rect.size()); ++i) {
 					min_box = fitEllipse( min_r[i] );
-					double scaled_touch_x = (min_box.center.x /950) *2 -1 ;
-					float scaled_touch_y = (min_box.center.y /600) *2 -1 ;
+					double scaled_touch_x = (min_box.center.x /930) ;
+					float scaled_touch_y = (min_box.center.y /600) ;
 
 					sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
 
@@ -371,7 +416,7 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			for (int i = 0; i < int(min_rect.size()); ++i) {
 				min_box = fitEllipse( min_r[i] );			// draw an ellipse for each touchpoint
 
-				float scaled_touch_x = min_box.center.x / 950;		// framesize; hardcoded (!!!)
+				float scaled_touch_x = min_box.center.x / 930;		// framesize; hardcoded (!!!)
 				float scaled_touch_y = min_box.center.y / 600;
 
 				sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
@@ -380,7 +425,6 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			}
 		}
 		
-		sender.updateCursors();
 	}
 }
 

@@ -31,14 +31,49 @@ TUIOSender::TUIOSender(const char* host, int port) {
 
 void TUIOSender::addTuioCursor(float const& x, float const& y)
 {
-	m_newTuioPoints.push_back(std::make_pair(x,y));
+	TuioCursor temp(m_tuioServer->getSessionID(),0,x,y);
+
+	bool updated = false;
+
+	for (auto i = m_temp.begin(); i != m_temp.end(); ++i)
+	{
+		if(i->getDistance(x,y)<0.1)
+		{
+			i->incrementHitCounter();
+			updated=true;
+
+			if(i->getHitCounter() > 2)
+			{
+				m_newTuioPoints.push_back(std::make_pair(x,y));
+			}
+
+			break;
+		}
+	}
+
+	if(!updated)
+	{
+		temp.incrementHitCounter();
+		m_temp.push_back(temp);
+	}
 }
 
 void TUIOSender::cleanCursors()
 {
-	for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) {
+	for (auto i = m_temp.begin(); i != m_temp.end(); ++i)
+	{
+		i->incrementCounter();
+		if(i->getCounter() - i->getHitCounter() >= 2 )
+		{
+			m_temp.erase(i);
+		} 
+	}
+
+
+	for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) 
+	{
 		i->second->incrementMissCounter();
-		if (i->second->getMissCounter() >= 10)
+		if (i->second->getMissCounter() >= 5)
 		{
 			std::cout << "Remove point with ID " << i->second->getCursorID() << std::endl;
 			m_tuioServer->removeTuioCursor(i->second);
@@ -53,21 +88,15 @@ void TUIOSender::cleanCursors()
 void TUIOSender::updateCursors()
 {
 	//std::cout << "Num new points: " << m_newTuioPoints.size() << std::endl;
-
 	for (auto & i : m_newTuioPoints)
 	{
-		//treshhold to filter bad points out 
-		if (i.first < 0.1 || i.second < 0.1)
-		{
-			break;
-		}
-
+		//std::cout << "[" << i.first << ", " << i.second << "]" << std::end;
 		//std::cout << "position: [" << i.first << ", " << i.second << "]" << std::endl;
 		bool update = false;
 
 		for (auto & cursor : m_TUIOCursorMap)
 		{
-			if (cursor.second->getDistance(i.first, i.second) < 0.1)
+			if (cursor.second->getDistance(i.first, i.second) < 0.2)
 			{
 				std::cout << "Update point with ID: " << cursor.second->getCursorID() << std::endl;
 				m_tuioServer->updateTuioCursor(cursor.second, i.first, i.second);
@@ -89,6 +118,7 @@ void TUIOSender::updateCursors()
 	}
 	m_newTuioPoints.erase(m_newTuioPoints.begin(), m_newTuioPoints.end());
 }
+
 
 void TUIOSender::sendCursors() {
 	m_tuioServer->stopUntouchedMovingCursors();

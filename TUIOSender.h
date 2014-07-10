@@ -48,9 +48,10 @@ public:
 	TuioTime m_currentTime;
 	TuioServer *m_tuioServer;
 
-	std::deque<std::pair<float, float>> m_newTuioPoints;	
+	std::deque<std::pair<float, float>> m_newTuioPoints;
+	std::list<TuioCursor> m_temp;
+
 	std::map<int, TuioCursor*> m_TUIOCursorMap;
-	std::vector<TuioPoint*> m_badPositions;
 
 private:
 

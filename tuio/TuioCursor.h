@@ -41,6 +41,8 @@ namespace TUIO {
 		 */ 
 		int cursor_id;
 		int miss_counter;
+		int hit_counter;
+		int counter;
 		
 	public:
 		/**
@@ -107,6 +109,35 @@ namespace TUIO {
 		void resetMissCounter(){
 			miss_counter = -1;
 		};
+
+		void incrementHitCounter()
+		{
+			++hit_counter;
+		};
+
+		int getHitCounter()
+		{
+			return hit_counter;
+		};
+
+		void resetHitCounter(){
+			hit_counter = -1;
+		};
+
+		void incrementCounter()
+		{
+			++counter;
+		};
+
+		int getCounter()
+		{
+			return counter;
+		};
+
+		void resetCounter(){
+			counter = -1;
+		};
+
 	};
 };
 #endif

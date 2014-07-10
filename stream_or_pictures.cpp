@@ -63,7 +63,7 @@ bool is_bigger(RotatedRect box_1, RotatedRect box_2);
 
 
 //////// TUIOSENDER //////
-TUIOSender sender;
+TUIOSender sender("perseus", 3333);
 
 
 int main() {

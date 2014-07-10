@@ -41,7 +41,7 @@ Rect bounding_rect;
 // mser values
 int _delta=1; 				// default: 1; 			good: 1 						[1; infinity]
 int _min_area=2; //600			// default: 60; 		good: 60 						[1; infinity]
-int _max_area=500; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
+int _max_area=150; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
 double _max_variation=.08; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
 double _min_diversity=.5;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
 

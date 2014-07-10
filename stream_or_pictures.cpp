@@ -345,8 +345,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			if (min_r.size() > 0) {
 				for (int i = 0; i < int(min_rect.size()); ++i) {
 					min_box = fitEllipse( min_r[i] );
-					double scaled_touch_x = min_box.center.x / 1392;
-					float scaled_touch_y = min_box.center.y / 1044;
+					double scaled_touch_x = (min_box.center.x /950) *2 -1 ;
+					float scaled_touch_y = (min_box.center.y /600) *2 -1 ;
 
 					sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
 
@@ -368,8 +368,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			for (int i = 0; i < int(min_rect.size()); ++i) {
 				min_box = fitEllipse( min_r[i] );			// draw an ellipse for each touchpoint
 
-				float scaled_touch_x = min_box.center.x / 1392;		// framesize; hardcoded (!!!)
-				float scaled_touch_y = min_box.center.y / 1044;
+				float scaled_touch_x = min_box.center.x / 950;		// framesize; hardcoded (!!!)
+				float scaled_touch_y = min_box.center.y / 600;
 
 				sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
 

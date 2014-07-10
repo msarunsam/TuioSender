@@ -40,8 +40,8 @@ Rect bounding_rect;
 
 // mser values
 int _delta=1; 				// default: 1; 			good: 1 						[1; infinity]
-int _min_area=20; //60			// default: 60; 		good: 60 						[1; infinity]
-int _max_area=5000; //5000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
+int _min_area=2; //600			// default: 60; 		good: 60 						[1; infinity]
+int _max_area=500; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
 double _max_variation=.08; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
 double _min_diversity=.5;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
 
@@ -62,10 +62,9 @@ void get_min_box(vector<Point> r, RotatedRect box);
 bool is_bigger(RotatedRect box_1, RotatedRect box_2);
 
 
-
 //////// TUIOSENDER //////
 TUIOSender sender;
-int test1;
+
 
 int main() {
 
@@ -90,33 +89,20 @@ int main() {
 		// load image
 		Mat img;
 		img = imread("binary.png", CV_LOAD_IMAGE_COLOR);
-
-
-	///////////////////////
-		cv::Mat image(img);
-		cv::Rect myROI(250, 200, 950, 600);
-		cv::Mat croppedImage = img(myROI);
-		//cv::Mat croppedImage = img(Rect(50,80,100,100));
-
-		// SET VIEW OF INTEREST
-		//cvSetImageROI(img, cvRect(250, 200, 950, 600));
-///////////////////////
-
-
-		if (!croppedImage.data) {
+		if (!img.data) {
 			std::cout << "Error: couldn't load image" << std::endl;
 			return 0;
 		}
 
 		if (ALGORITHM == 0) {
-		    get_contours(croppedImage);
+		    get_contours(img);
 		}
 		else if (ALGORITHM == 1) {
-			mser_algo(croppedImage);
+			mser_algo(img);
 		}
 		else if (ALGORITHM == 2) {
-			get_contours(croppedImage);
-			mser_algo(croppedImage);
+			get_contours(img);
+			mser_algo(img);
 		}
 		else {
 			std::cout << "Error: invalide algorithm number" << std::endl;
@@ -158,15 +144,15 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 			else {
 				// save the data stream in each frame
 				IplImage* frame = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
-
 				frame -> imageData = (char*) g_cam-> capture();
-
 
 ///////////////////////
 				// SET VIEW OF INTEREST
 				cvSetImageROI(frame, cvRect(250, 200, 950, 600));
 				frameMat = Mat(frame);
 ///////////////////////
+
+				frameMat = Mat(frame);
 
 				// show stream
 				cvShowImage("Stream", frame);
@@ -178,8 +164,8 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 		        	cvSaveImage("current.png", frame);
 		        	cvSaveImage("min.png", frame);
 		        	minI = imread("min.png", CV_LOAD_IMAGE_GRAYSCALE);
-		        	maskI = imread("mask.png", CV_LOAD_IMAGE_GRAYSCALE);
-		        	bitwise_not(maskI, maskI);
+		        	//maskI = imread("mask4.bmp", CV_LOAD_IMAGE_GRAYSCALE);
+		        	//bitwise_not(maskI, maskI);
 
 		        }
 		        else if (char(key) == 10) { // Enter takes an image of the background
@@ -230,7 +216,7 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 		        }
 		        
 		        Mat black(frameMat.rows, frameMat.cols, frameMat.type(), Scalar::all(0));
-		        black.copyTo(frameMat, maskI);
+		        //black.copyTo(frameMat, maskI);
 
 		        if(maxI.data && minI.data) {
 		        	subtract(Mat(frame), minI, temp2, noArray(), -1);
@@ -301,32 +287,20 @@ void mser_algo(Mat temp_img)  {
 		cvtColor(temp_img, temp_img, CV_BGR2GRAY);
 	}
 
-///////////////////////
-	cv::Mat cropedImage = temp_img(Rect(50,50,100,100));
-///////////////////////
-
-
 	temp_img.copyTo(ellipses);
 
 	MSER ms(_delta, _min_area, _max_area, _max_variation, _min_diversity, _max_evolution, _area_threshold, _min_margin, _edge_blur_size);
 	ms(temp_img, contours, Mat());
 
 	cvtColor(ellipses, ellipses, CV_GRAY2BGR);
-
 	
 	if (SYSTEM_INPUT == 0) {
-
-///////////////////////
-		draw_ellipses(contours, ellipses, cropedImage);
-///////////////////////
+		draw_ellipses(contours, ellipses, img0);
+		
 	}
 	else {
 		if (skip_first_frame == 1) {
-///////////////////////
-			//Rect roi(10, 20, 100, 50);
-			//Mat image_roi = image(roi);
-			draw_ellipses(contours, ellipses, cropedImage);
-///////////////////////
+			draw_ellipses(contours, ellipses, img0);
 		}
 
 		if(skip_first_frame == 0) {
@@ -346,7 +320,7 @@ void mser_algo(Mat temp_img)  {
 	sender.sendCursors();
 }
 
-void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat cropedImage) {
+void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 	std::vector<Point> r;
 	std::vector<RotatedRect> boxes;
 	min_r.clear();
@@ -394,17 +368,15 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat cropedImag
 			for (int i = 0; i < int(min_rect.size()); ++i) {
 				min_box = fitEllipse( min_r[i] );			// draw an ellipse for each touchpoint
 
-				///// Here you get the touchpoints, have fun ;) /////
-
 				float scaled_touch_x = min_box.center.x / 1392;		// framesize; hardcoded (!!!)
 				float scaled_touch_y = min_box.center.y / 1044;
 
 				sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
-				
+
 				std::cout << "Touchpoint " << i << ": " << "[" << scaled_touch_x << ", " << scaled_touch_y << "]" << std::endl;
 			}
 		}
-
+		
 		sender.updateCursors();
 	}
 }

@@ -152,7 +152,7 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 				frameMat = Mat(frame);
 ///////////////////////
 
-				flip(frameMat, frameMat, 0);
+				flip(frameMat, frameMat, 1);
 
 
 				frameMat = Mat(frame);

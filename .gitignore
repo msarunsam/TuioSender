@@ -31,3 +31,7 @@ stream_or_pictures
 # Other repositories
 .svn
 .cvs
+
+# other files
+.nfs*
+

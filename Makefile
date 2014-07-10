@@ -41,7 +41,7 @@ COMMON_SOURCES = $(TUIO_SOURCES) $(OSC_SOURCES)
 COMMON_OBJECTS = $(COMMON_SOURCES:.cpp=.o)
 
 
-all: tuiosender opencv test static libbaumer shared
+all: tuiosender opencv static libbaumer shared
 
 static:	$(COMMON_OBJECTS)
 	ar rcs $(TUIO_STATIC) $(COMMON_OBJECTS)
@@ -57,9 +57,6 @@ opencv: $(COMMON_OBJECTS) $(OCV_OBJECTS) $(TUIO_SENDER_OBJECTS)
 
 libbaumer:
 	cd ./opencv-touch/src/ && make
-
-test: $(COMMON_OBJECTS) $(TEST_OBJECTS) $(TUIO_SENDER_OBJECTS)
-	$(CXX) -o $(TEST) $+ $(SDL_LDFLAGS) $(FRAMEWORKS) $(LDPATH) $(LDFLAGS)
 
 clean:
 	rm -rf $(TUIO_SENDER) $(OPENCV_STREAM) $(TUIO_STATIC) $(TUIO_SHARED) $(COMMON_OBJECTS) $(OCV) $(OCV_OBJECTS) $(TUIO_SENDER_OBJECTS)

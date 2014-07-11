@@ -72,49 +72,48 @@ void TUIOSender::updateCursors()
 			tempCollapsed.push_back(cursor);
 		}
 	}
+	//std::cout << "tempCollapsed.size(): " << tempCollapsed.size() << std::endl;
 
 	// update existing cursors
-	for (auto j = tempCollapsed.begin(); j != tempCollapsed.end(); ) {
+	for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) {
 		// build vector with distances
-		std::vector<std::pair<std::set<TuioCursor*>::iterator, float>> distances;
+		std::vector<std::pair<std::vector<TuioCursor>::iterator, float>> distances;
 
-		for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) {
+		for (auto j = tempCollapsed.begin(); j != tempCollapsed.end(); ++j) {
 			// save distances
-			if ((*i)->getDistance(j->getX(), j->getY()) < COLLAPSE_THRESHOLD_EXISTING) {
-				distances.push_back(std::make_pair(i, (*i)->getDistance(j->getX(), j->getY())));
+			if (j->getDistance((*i)->getX(), (*i)->getY()) < COLLAPSE_THRESHOLD_EXISTING) {
+				distances.push_back(std::make_pair(j, j->getDistance((*i)->getX(), (*i)->getY())));
 			}
 		}
 
 		// sort distances to find nearest neighbor
 		if (!distances.empty()) {
+			//std::cout << "DISTANCE EMPTY" << std::endl;
 			std::sort(distances.begin(), distances.end(),
-				[](std::pair<std::set<TuioCursor*>::iterator, float> const& a, std::pair<std::set<TuioCursor*>::iterator, float> const& b) {
+				[](std::pair<std::vector<TuioCursor>::iterator, float> const& a, std::pair<std::vector<TuioCursor>::iterator, float> const& b) {
 					return a.second < b.second;
 			});
 
 			auto it = distances[0].first;
-			m_tuioServer->updateTuioCursor(*it, j->getX(), j->getY());
-			(*it)->resetMissCounter();
-			j = tempCollapsed.erase(j);
-			continue;
+			m_tuioServer->updateTuioCursor(*i, it->getX(), it->getY());
+			(*i)->resetMissCounter();
+			tempCollapsed.erase(it);
 		}
-
-		++j;
 	}
 
 	// remove stall cursors
 	for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ) {
 		(*i)->incrementMissCounter();
-		std::cout << "Increment miss counter for cursor " << (*i)->getCursorID() << " (" << (*i)->getMissCounter() << ")" << std::endl;
+		//std::cout << "Increment miss counter for cursor " << (*i)->getCursorID() << " (" << (*i)->getMissCounter() << ")" << std::endl;
 
 		if ((*i)->getMissCounter() > STICKY_FRAMES) {
-			std::cout << "Remove cursor " << (*i)->getCursorID() << std::endl;
+			//std::cout << "Remove cursor " << (*i)->getCursorID() << std::endl;
 			m_tuioServer->removeTuioCursor(*i);
 			i = m_TUIOCursorMap.erase(i);
 			continue;
-		} else {
-			++i;
 		}
+		
+		++i;
 	}
 
 	// add new cursors

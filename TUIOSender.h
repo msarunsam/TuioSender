@@ -22,7 +22,7 @@
 #ifndef INCLUDED_TUIOSender_H
 #define INCLUDED_TUIOSender_H
 
-#include "TuioServer.h"
+#include "tuio/TuioServer.h"
 #include "TuioCursor.h"
 #include <list>
 #include <deque>
@@ -58,10 +58,10 @@ public:
 	std::set<TuioCursor*> m_TUIOCursorMap;
 
 private:
-	const float COLLAPSE_THRESHOLD = .02;
-	const float COLLAPSE_THRESHOLD_EXISTING = .03;
+	const float COLLAPSE_THRESHOLD = .03;
+	const float COLLAPSE_THRESHOLD_EXISTING = .04;
 	const int STICKY_FRAMES        = 7;
-	const int FRAME_THRESHOLD      = 2;
+	const int FRAME_THRESHOLD      = 5;
 };
 
 #endif /* INCLUDED_TUIOSender_H */

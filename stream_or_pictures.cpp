@@ -43,8 +43,8 @@ Rect bounding_rect;
 // mser values
 int _delta=1; 				// default: 1; 			good: 1 						[1; infinity]
 int _min_area=2; //600			// default: 60; 		good: 60 						[1; infinity]
-int _max_area=80; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
-double _max_variation=.08; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
+int _max_area=300; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
+double _max_variation=.03; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
 double _min_diversity=.8;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
 
 //used only with colored images
@@ -178,12 +178,14 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 
 		        }
 		        else if (char(key) == 10) { // Enter takes an image of the background
-		        	//cvSaveImage("background.png", frame);
 		        	maxI = imread("background.png", CV_LOAD_IMAGE_GRAYSCALE);
 		        	//threshold(maxI, maskI, 25, 255, CV_THRESH_BINARY); //65
 		        	//pMOG->operator()(background, MaskMOG);
 		        	
 		        }
+				else if (char(key) == 112) {
+					cvSaveImage("background.png", frame);
+				}
 		        else if(char(key) ==  49 ) {
 		        	++_delta;
 		        }

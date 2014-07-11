@@ -42,9 +42,9 @@ Rect bounding_rect;
 
 // mser values
 int _delta=1; 				// default: 1; 			good: 1 						[1; infinity]
-int _min_area=2; //600			// default: 60; 		good: 60 						[1; infinity]
-int _max_area=300; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
-double _max_variation=.03; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
+int _min_area=4; //600			// default: 60; 		good: 60 						[1; infinity]
+int _max_area=400; //200000		// default: 14 400; 	good: 20 000 for fingertips		[1; infinity]
+double _max_variation=.05; 	// default: 0.25;		good: 0.03 - 0.05				[0; 1]
 double _min_diversity=.8;	// default: 0.2;		good: 0.5 - 0.7					[0; 1]
 
 //used only with colored images
@@ -153,14 +153,8 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 				cvSetImageROI(frame, cvRect(CROP[0], CROP[1], CROP[2], CROP[3]));
 				frameMat = Mat(frame);
 ///////////////////////
-
-				//flip(frameMat, frameMat, 1);
-
-
-				frameMat = Mat(frame);
-
-
-
+				
+				flip(frameMat, frameMat, -1);
 
 
 				// show stream
@@ -170,8 +164,8 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 		            break;      
 		        }
 		        else if (char(key) == 32) { // Space saves the current image
-		        	cvSaveImage("current.png", frame);
-		        	cvSaveImage("min.png", frame);
+		        	//cvSaveImage("current.png", frame);
+		        	//cvSaveImage("min.png", frame);
 		        	minI = imread("min.png", CV_LOAD_IMAGE_GRAYSCALE);
 		        	//maskI = imread("mask4.bmp", CV_LOAD_IMAGE_GRAYSCALE);
 		        	//bitwise_not(maskI, maskI);
@@ -394,8 +388,27 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 
 	if (!min_rect.empty() || !min_r.empty()) {
 		if (SYSTEM_INPUT == 1) {
+			for (auto const& i : boxes) {
+				//min_box = fitEllipse( min_r[i] );
+				double scaled_touch_x = (i.center.x / CROP[2]) ;
+				float scaled_touch_y = (i.center.y / CROP[3]) ;
+
+				sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
+
+				/*
+				if (std::fabs(scaled_touch_x - prev_x) > 0.0001) {
+					scaled_touch_x = prev_x;
+				}
+				if (std::fabs(scaled_touch_y - prev_y) > 0.0001) {
+					scaled_touch_y = prev_y;
+				}*/
+				//prev_x = scaled_touch_x;
+				//prev_y = scaled_touch_y;
+				//std::cout << "Touchpoint " << i << ": " << "[" << std::fabs(scaled_touch_x) << ", " << std::fabs(scaled_touch_y) << "]" << std::endl;
+
+			}				
 			if (min_r.size() > 0) {
-				for (int i = 0; i < int(min_rect.size()); ++i) {
+				/*for (int i = 0; i < int(min_rect.size()); ++i) {
 					min_box = fitEllipse( min_r[i] );
 					double scaled_touch_x = (min_box.center.x / CROP[2]) ;
 					float scaled_touch_y = (min_box.center.y / CROP[3]) ;
@@ -413,7 +426,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 					//prev_y = scaled_touch_y;
 					//std::cout << "Touchpoint " << i << ": " << "[" << std::fabs(scaled_touch_x) << ", " << std::fabs(scaled_touch_y) << "]" << std::endl;
 
-				}				
+				/*}
+				*/
 			}
 		}
 		else {

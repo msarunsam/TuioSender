@@ -65,10 +65,13 @@ void TUIOSender::updateCursors()
 		bool similarFound = false;
 		for (auto& i : m_temp) {
 			if (cursor.getCursorID() != i.getCursorID() && cursor.getDistance(i.getX(), i.getY()) < COLLAPSE_THRESHOLD) {
+				i.resetMissCounter();
+				i.incrementHitCounter();
 				similarFound = true;
 			}
 		}
-		if (!similarFound) {
+		if (!similarFound || m_temp.empty()) {
+			cursor.incrementHitCounter();
 			tempCollapsed.push_back(cursor);
 		}
 	}
@@ -76,19 +79,20 @@ void TUIOSender::updateCursors()
 
 	// update existing cursors
 	for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) {
+
 		// build vector with distances
 		std::vector<std::pair<std::vector<TuioCursor>::iterator, float>> distances;
 
 		for (auto j = tempCollapsed.begin(); j != tempCollapsed.end(); ++j) {
 			// save distances
-			if (j->getDistance((*i)->getX(), (*i)->getY()) < COLLAPSE_THRESHOLD_EXISTING) {
+			float threshold = (*i)->getHitCounter() > 20 ? COLLAPSE_THRESHOLD_EXISTING : COLLAPSE_THRESHOLD;
+			if (j->getDistance((*i)->getX(), (*i)->getY()) < threshold)  {
 				distances.push_back(std::make_pair(j, j->getDistance((*i)->getX(), (*i)->getY())));
 			}
 		}
 
 		// sort distances to find nearest neighbor
 		if (!distances.empty()) {
-			//std::cout << "DISTANCE EMPTY" << std::endl;
 			std::sort(distances.begin(), distances.end(),
 				[](std::pair<std::vector<TuioCursor>::iterator, float> const& a, std::pair<std::vector<TuioCursor>::iterator, float> const& b) {
 					return a.second < b.second;
@@ -97,7 +101,9 @@ void TUIOSender::updateCursors()
 			auto it = distances[0].first;
 			m_tuioServer->updateTuioCursor(*i, it->getX(), it->getY());
 			(*i)->resetMissCounter();
+			(*i)->incrementHitCounter();
 			tempCollapsed.erase(it);
+			std::cout << "Updating cursor with ID: " << (*i)->getCursorID() << ", HitCounter: " << (*i)->getHitCounter() << std::endl;
 		}
 	}
 
@@ -108,6 +114,8 @@ void TUIOSender::updateCursors()
 
 		if ((*i)->getMissCounter() > STICKY_FRAMES) {
 			//std::cout << "Remove cursor " << (*i)->getCursorID() << std::endl;
+			std::cout << "Removing Cursor with ID: " << (*i)->getCursorID() << " MissCounter: " << (*i)->getMissCounter() << " HitCounter: " << (*i)->getHitCounter() << std::endl;
+
 			m_tuioServer->removeTuioCursor(*i);
 			i = m_TUIOCursorMap.erase(i);
 			continue;
@@ -119,14 +127,21 @@ void TUIOSender::updateCursors()
 	// add new cursors
 	for (auto i = tempCollapsed.begin(); i != tempCollapsed.end(); ) {
 		i->incrementHitCounter();
-		if (i->getHitCounter() > FRAME_THRESHOLD) {
-			m_TUIOCursorMap.insert(m_tuioServer->addTuioCursor(i->getX(), i->getY()));
+		if (i->getMissCounter() > STICKY_FRAMES) {
+			i = tempCollapsed.erase(i);	
+		} else if (i->getHitCounter() > FRAME_THRESHOLD) {
+			auto pair = m_TUIOCursorMap.insert(m_tuioServer->addTuioCursor(i->getX(), i->getY()));
+			(*pair.first)->incrementHitCounter();
+			std::cout << "Adding cursor with ID " << (*pair.first)->getHitCounter() << std::endl;
 			i = tempCollapsed.erase(i);
 		} else {
 			++i;
 		}
 	}
-
+	
+	for (auto& i : tempCollapsed) {
+		i.incrementMissCounter();
+	}
 	m_temp = tempCollapsed;
 
 	/*

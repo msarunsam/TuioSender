@@ -41,7 +41,7 @@ public:
 		delete m_tuioServer;
 	};
 
-	void drawEllipses(cv::Mat& img) const;
+	void drawEllipses(cv::Mat& img, int dimX, int dimY) const;
 	
 	void initFrame();
 	void addTuioCursor(float const& x, float const& y);
@@ -58,10 +58,10 @@ public:
 	std::set<TuioCursor*> m_TUIOCursorMap;
 
 private:
-	const float COLLAPSE_THRESHOLD = .03;
-	const float COLLAPSE_THRESHOLD_EXISTING = .04;
-	const int STICKY_FRAMES        = 3;
-	const int FRAME_THRESHOLD      = 5;
+	const float COLLAPSE_THRESHOLD = .02;
+	const float COLLAPSE_THRESHOLD_EXISTING = .03;
+	const int STICKY_FRAMES        = 7;
+	const int FRAME_THRESHOLD      = 2;
 };
 
 #endif /* INCLUDED_TUIOSender_H */

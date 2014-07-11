@@ -10,6 +10,8 @@
 
 using namespace cv;
 
+const int CROP[] = {250, 200, 930, 600};
+
 int SYSTEM_INPUT = 1; // 0 uses a picture; change it to 1 to use the stream
 int ALGORITHM = 1; // 0 uses only contours; change it to 1 to use MSER or to 2 to use both
 
@@ -148,7 +150,7 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 
 ///////////////////////
 				// SET VIEW OF INTEREST
-				cvSetImageROI(frame, cvRect(250, 200, 930, 600));
+				cvSetImageROI(frame, cvRect(CROP[0], CROP[1], CROP[2], CROP[3]));
 				frameMat = Mat(frame);
 ///////////////////////
 
@@ -363,7 +365,7 @@ void mser_algo(Mat temp_img)  {
 	//++test1;
 	//std::cout << "Frame: " << test1 << std::endl;
 	sender.updateCursors();
-	sender.drawEllipses(ellipses);
+	sender.drawEllipses(ellipses, CROP[2], CROP[3]);
 	sender.sendCursors();
 	imshow( "Ellipses", ellipses);
 }
@@ -393,8 +395,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			if (min_r.size() > 0) {
 				for (int i = 0; i < int(min_rect.size()); ++i) {
 					min_box = fitEllipse( min_r[i] );
-					double scaled_touch_x = (min_box.center.x /930) ;
-					float scaled_touch_y = (min_box.center.y /600) ;
+					double scaled_touch_x = (min_box.center.x / CROP[2]) ;
+					float scaled_touch_y = (min_box.center.y / CROP[3]) ;
 
 					sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
 
@@ -416,8 +418,8 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 			for (int i = 0; i < int(min_rect.size()); ++i) {
 				min_box = fitEllipse( min_r[i] );			// draw an ellipse for each touchpoint
 
-				float scaled_touch_x = min_box.center.x / 930;		// framesize; hardcoded (!!!)
-				float scaled_touch_y = min_box.center.y / 600;
+				float scaled_touch_x = min_box.center.x / CROP[2];		// framesize; hardcoded (!!!)
+				float scaled_touch_y = min_box.center.y / CROP[3];
 
 				sender.addTuioCursor(scaled_touch_x, scaled_touch_y);
 

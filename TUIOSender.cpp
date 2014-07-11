@@ -35,14 +35,14 @@ void TUIOSender::addTuioCursor(float const& x, float const& y)
 	m_temp.push_back(TuioCursor(m_tuioServer->getSessionID(),0,x,y));
 }
 
-void TUIOSender::drawEllipses(cv::Mat& img) const
+void TUIOSender::drawEllipses(cv::Mat& img, int dimX, int dimY) const
 {
 	for (auto const& i : m_TUIOCursorMap) {
-		cv::ellipse(img, cv::Point(i->getX() * 950, i->getY() * 600), cv::Size(10, 10), .0, .0, 360.0, cv::Scalar(0, 0, 255), 5);
+		cv::ellipse(img, cv::Point(i->getX() * dimX, i->getY() * dimY), cv::Size(10, 10), .0, .0, 360.0, cv::Scalar(0, 0, 255), 5);
 		
 		std::ostringstream convert;
 		convert << i->getCursorID();
-		cv::putText(img, convert.str(), cv::Point(i->getX() * 950, i->getY() * 600), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.2, cv::Scalar(0,255,0), 1);
+		cv::putText(img, convert.str(), cv::Point(i->getX() * dimX, i->getY() * dimY), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.2, cv::Scalar(0,255,0), 1);
 	}
 }
 
@@ -64,7 +64,7 @@ void TUIOSender::updateCursors()
 
 		bool similarFound = false;
 		for (auto& i : m_temp) {
-			if (cursor.getDistance(i.getX(), i.getY()) < COLLAPSE_THRESHOLD) {
+			if (cursor.getCursorID() != i.getCursorID() && cursor.getDistance(i.getX(), i.getY()) < COLLAPSE_THRESHOLD) {
 				similarFound = true;
 			}
 		}
@@ -73,13 +73,13 @@ void TUIOSender::updateCursors()
 		}
 	}
 
-	// update existing cursors, remove stall ones
+	// update existing cursors
 	for (auto j = tempCollapsed.begin(); j != tempCollapsed.end(); ) {
 		// build vector with distances
 		std::vector<std::pair<std::set<TuioCursor*>::iterator, float>> distances;
 
 		for (auto i = m_TUIOCursorMap.begin(); i != m_TUIOCursorMap.end(); ++i) {
-			// check if cursors has stalled
+			// save distances
 			if ((*i)->getDistance(j->getX(), j->getY()) < COLLAPSE_THRESHOLD_EXISTING) {
 				distances.push_back(std::make_pair(i, (*i)->getDistance(j->getX(), j->getY())));
 			}

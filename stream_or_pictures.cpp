@@ -66,7 +66,7 @@ bool is_bigger(RotatedRect box_1, RotatedRect box_2);
 
 //////// TUIOSENDER //////
 TUIOSender sender("medusa", 3333);
-
+int interpolation=INTER_LINEAR;
 
 int main() {
 
@@ -152,6 +152,7 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 				// SET VIEW OF INTEREST
 				cvSetImageROI(frame, cvRect(CROP[0], CROP[1], CROP[2], CROP[3]));
 				frameMat = Mat(frame);
+				//resize(frameMat, frameMat, Size(10,20), 0, 0, interpolation);
 ///////////////////////
 				
 				flip(frameMat, frameMat, -1);
@@ -165,7 +166,7 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 		        }
 		        else if (char(key) == 32) { // Space saves the current image
 		        	//cvSaveImage("current.png", frame);
-		        	//cvSaveImage("min.png", frame);
+		        	cvSaveImage("min.png", frame);
 		        	minI = imread("min.png", CV_LOAD_IMAGE_GRAYSCALE);
 		        	//maskI = imread("mask4.bmp", CV_LOAD_IMAGE_GRAYSCALE);
 		        	//bitwise_not(maskI, maskI);

@@ -32,7 +32,9 @@ TUIOSender::TUIOSender(const char* host, int port) {
 
 void TUIOSender::addTuioCursor(float const& x, float const& y)
 {
-	m_temp.push_back(TuioCursor(m_tuioServer->getSessionID(),0,x,y));
+	if (x > 0.05 && x < 0.95 && y > 0.05 && y < 0.95){
+		m_temp.push_back(TuioCursor(m_tuioServer->getSessionID(),0,x,y));	
+	}
 }
 
 void TUIOSender::drawEllipses(cv::Mat& img, int dimX, int dimY) const
@@ -103,7 +105,7 @@ void TUIOSender::updateCursors()
 			(*i)->resetMissCounter();
 			(*i)->incrementHitCounter();
 			tempCollapsed.erase(it);
-			std::cout << "Updating cursor with ID: " << (*i)->getCursorID() << ", HitCounter: " << (*i)->getHitCounter() << std::endl;
+			//std::cout << "Updating cursor with ID: " << (*i)->getCursorID() << ", HitCounter: " << (*i)->getHitCounter() << std::endl;
 		}
 	}
 
@@ -114,7 +116,7 @@ void TUIOSender::updateCursors()
 
 		if ((*i)->getMissCounter() > STICKY_FRAMES) {
 			//std::cout << "Remove cursor " << (*i)->getCursorID() << std::endl;
-			std::cout << "Removing Cursor with ID: " << (*i)->getCursorID() << " MissCounter: " << (*i)->getMissCounter() << " HitCounter: " << (*i)->getHitCounter() << std::endl;
+			//std::cout << "Removing Cursor with ID: " << (*i)->getCursorID() << " MissCounter: " << (*i)->getMissCounter() << " HitCounter: " << (*i)->getHitCounter() << std::endl;
 
 			m_tuioServer->removeTuioCursor(*i);
 			i = m_TUIOCursorMap.erase(i);
@@ -132,7 +134,7 @@ void TUIOSender::updateCursors()
 		} else if (i->getHitCounter() > FRAME_THRESHOLD) {
 			auto pair = m_TUIOCursorMap.insert(m_tuioServer->addTuioCursor(i->getX(), i->getY()));
 			(*pair.first)->incrementHitCounter();
-			std::cout << "Adding cursor with ID " << (*pair.first)->getHitCounter() << std::endl;
+			//std::cout << "Adding cursor with ID " << (*pair.first)->getHitCounter() << std::endl;
 			i = tempCollapsed.erase(i);
 		} else {
 			++i;

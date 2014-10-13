@@ -58,10 +58,10 @@ public:
 	std::set<TuioCursor*> m_TUIOCursorMap;
 
 private:
-	const float COLLAPSE_THRESHOLD = .2;
-	const float COLLAPSE_THRESHOLD_EXISTING = .2;
-	const int STICKY_FRAMES        = 2;
-	const int FRAME_THRESHOLD      = 6;
+	const float COLLAPSE_THRESHOLD = .2; //0.2
+	const float COLLAPSE_THRESHOLD_EXISTING = .2; //.2
+	const int STICKY_FRAMES        = 2; //2
+	const int FRAME_THRESHOLD      = 6; //6
 };
 
 #endif /* INCLUDED_TUIOSender_H */

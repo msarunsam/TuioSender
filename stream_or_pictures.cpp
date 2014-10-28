@@ -1,3 +1,4 @@
+/*
 #include <BSystem.h>
 #include <BCamera.h>
 
@@ -65,7 +66,7 @@ bool is_bigger(RotatedRect box_1, RotatedRect box_2);
 
 
 //////// TUIOSENDER //////
-TUIOSender sender("medusa", 3333);
+TUIOSender sender("127.0.0.1", 3333);
 int interpolation=INTER_LINEAR;
 
 int main() {
@@ -128,7 +129,7 @@ void init_camera() {
 		return;
 	}
 
-	g_cam = g_system->getCamera(0 /*the first camera*/, false /*use not rgb*/, false /*not fastest mode but full resolution*/);
+	g_cam = g_system->getCamera(0 , false , false );
 	
 	width = g_cam->getWidth();
 	height = g_cam->getHeight();
@@ -173,8 +174,8 @@ void open_stream(int width, int height, Ptr<BackgroundSubtractor> pMOG) {
 
 		        }
 		        else if (char(key) == 10) { // Enter takes an image of the background
-		        	maxI = imread("background.png", CV_LOAD_IMAGE_GRAYSCALE);
-		        	//threshold(maxI, maskI, 25, 255, CV_THRESH_BINARY); //65
+		        	//maxI = imread("background.png", CV_LOAD_IMAGE_GRAYSCALE);
+		        	threshold(maxI, maskI, 25, 255, CV_THRESH_BINARY); //65
 		        	//pMOG->operator()(background, MaskMOG);
 		        	
 		        }
@@ -286,7 +287,7 @@ void blob_detection(Mat img)
 	    float X=keypoints[i].pt.x; 
 	    float Y=keypoints[i].pt.y;
 	}
-	*/
+	
 
 }
 
@@ -406,7 +407,7 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 				//prev_x = scaled_touch_x;
 				//prev_y = scaled_touch_y;
 				//std::cout << "Touchpoint " << i << ": " << "[" << std::fabs(scaled_touch_x) << ", " << std::fabs(scaled_touch_y) << "]" << std::endl;
-
+/*
 			}				
 			if (min_r.size() > 0) {
 				/*for (int i = 0; i < int(min_rect.size()); ++i) {
@@ -428,7 +429,7 @@ void draw_ellipses(vector<vector<Point> > contours, Mat ellipses, Mat img0) {
 					//std::cout << "Touchpoint " << i << ": " << "[" << std::fabs(scaled_touch_x) << ", " << std::fabs(scaled_touch_y) << "]" << std::endl;
 
 				/*}
-				*/
+				
 			}
 		}
 		else {
@@ -476,3 +477,4 @@ void get_min_box(vector<Point> r, RotatedRect box) {
 bool is_bigger(RotatedRect box_1, RotatedRect box_2) {
 	return box_1.boundingRect().size().area() < box_2.boundingRect().size().area();
 }
+*/

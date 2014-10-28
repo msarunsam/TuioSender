@@ -13,12 +13,18 @@ TUIO_SENDER = TUIOSender
 TUIO_STATIC  = libTUIO.a
 TUIO_SHARED  = libTUIO.so
 OPENCV_STREAM = stream_or_pictures
+DISTORTION_STREAM = distortion
+ILLUMINATION_STREAM = IlluminationCorrection
 TEST = test
 
 INCLUDES = -I./tuio -I./oscpack -I/opt/boost/boost_1_55_0/include -Ipng++-0.2.3/ -I/opt/boost/boost_1_55_0/include -I./opencv-touch/src
 LDPATH = -L./opencv-touch/src -L/opt/boost/boost_1_55_0/lib
 LDFLAGS = -lBaumer -lrt -lboost_thread -ljpeg -lpng -lGL -lglut -lpthread -lbgapi \
-          -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_imgproc -lopencv_video -lboost_system
+          -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_imgproc -lopencv_video -lboost_system \
+          -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_objdetect
+
+
+
 CFLAGS  = -fPIC -Wall -O3 $(SDL_CFLAGS) -DLINUX -D_GNULINUX
 #CFLAGS  = -g -Wall -O3 $(SDL_CFLAGS)
 CXXFLAGS = $(CFLAGS) $(INCLUDES) -D$(ENDIANESS) -std=c++11
@@ -37,6 +43,12 @@ OCV_OBJECTS = ./stream_or_pictures.o
 TEST_SOURCES = ./test.cpp
 TEST_OBJECTS = ./test.o
 
+DISTORTION_SOURCES = ./distortion.cpp
+DISTORTION_OBJECTS = ./distortion.o
+
+ILLUMINATION_SOURCES = ./IlluminationCorrection.cpp
+ILLUMINATION_OBJECTS =./IlluminationCorrection.o
+
 COMMON_SOURCES = $(TUIO_SOURCES) $(OSC_SOURCES)
 COMMON_OBJECTS = $(COMMON_SOURCES:.cpp=.o)
 
@@ -49,15 +61,15 @@ static:	$(COMMON_OBJECTS)
 shared:	$(COMMON_OBJECTS)
 	$(CXX) -lpthread $+ $(SHARED_OPTIONS) -o $(TUIO_SHARED)
 
-tuiosender:	$(COMMON_OBJECTS) $(TUIO_SENDER_OBJECTS) $(OCV_OBJECTS) 
+tuiosender:	$(COMMON_OBJECTS) $(TUIO_SENDER_OBJECTS) $(DISTORTION_OBJECTS)
 	$(CXX) -o $(TUIO_SENDER) $+ $(SDL_LDFLAGS) $(FRAMEWORKS) $(LDPATH) $(LDFLAGS)
 
-opencv: $(COMMON_OBJECTS) $(OCV_OBJECTS) $(TUIO_SENDER_OBJECTS)
-	$(CXX) -o $(OPENCV_STREAM) $+ $(SDL_LDFLAGS) $(FRAMEWORKS) $(LDPATH) $(LDFLAGS)
+opencv: $(COMMON_OBJECTS) $(DISTORTION_OBJECTS) $(TUIO_SENDER_OBJECTS)
+	$(CXX) -o $(DISTORTION_STREAM) $+ $(SDL_LDFLAGS) $(FRAMEWORKS) $(LDPATH) $(LDFLAGS)
 
 libbaumer:
 	cd ./opencv-touch/src/ && make
 
 clean:
-	rm -rf $(TUIO_SENDER) $(OPENCV_STREAM) $(TUIO_STATIC) $(TUIO_SHARED) $(COMMON_OBJECTS) $(OCV) $(OCV_OBJECTS) $(TUIO_SENDER_OBJECTS)
+	rm -rf $(TUIO_SENDER) $(DISTORTION_STREAM) $(TUIO_STATIC) $(TUIO_SHARED) $(COMMON_OBJECTS) $(OCV) $(DISTORTION_OBJECTS) $(TUIO_SENDER_OBJECTS)
 	cd ./opencv-touch/src/ && make clean

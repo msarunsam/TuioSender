@@ -23,6 +23,8 @@ desktop.ini
 # Executables
 TUIOSender
 stream_or_pictures
+distortion
+IlluminationCorrection
 
 # Images
 *.png
@@ -35,3 +37,5 @@ stream_or_pictures
 # other files
 .nfs*
 
+# data
+data/

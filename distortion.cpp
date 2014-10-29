@@ -78,9 +78,28 @@ void perspectiveCorrection() {
 	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y));
 	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y+boundRect.height));
 
+
 	    Mat transmtx = getPerspectiveTransform(quad_pts,squre_pts);
 	    Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
-	    warpPerspective(src, transformed, transmtx, src.size());
+
+	    //imwrite("data/perspectiveCorrection.png", transmtx);
+	    Mat perspectiveCorrection;
+
+	    cv::FileStorage storage1("data/perspectiveCorrection.yml", cv::FileStorage::WRITE);
+	    storage1 << "transmtx" << transmtx;
+	    storage1.release();  
+
+	    //Reading from file
+
+	    cv::FileStorage storage2("data/perspectiveCorrection.yml", cv::FileStorage::READ);
+	    storage2["transmtx"] >> perspectiveCorrection;
+	    storage2.release();
+
+
+	    warpPerspective(src, transformed, perspectiveCorrection, src.size());
+	    
+
+
 	    Point P1=contours_poly[0][0];
 	    Point P2=contours_poly[0][1];
 	    Point P3=contours_poly[0][2];

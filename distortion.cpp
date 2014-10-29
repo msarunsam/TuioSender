@@ -25,12 +25,91 @@ int board_h;
 // callbacks
 void init_camera();
 IplImage* open_stream(int width, int height);
+void distortion();
+void illuminationCorrection();
+void perspectiveCorrection();
 
 int main() {
 
 	// initialize baumer camera
-	init_camera();
+	//init_camera();
 
+	//distortion();
+	//illuminationCorrection();
+	perspectiveCorrection();
+
+}
+
+void perspectiveCorrection() {
+	Mat src=imread("image_work.png");
+	Mat thr;
+	cvtColor(src,thr,CV_BGR2GRAY);
+	threshold( thr, thr, 70, 255,CV_THRESH_BINARY );
+
+	vector< vector <Point> > contours; // Vector for storing contour
+	vector< Vec4i > hierarchy;
+	int largest_contour_index=0;
+	int largest_area=0;
+
+	Mat dst(src.rows,src.cols,CV_8UC1,Scalar::all(0)); //create destination image
+	findContours( thr.clone(), contours, hierarchy,CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE ); // Find the contours in the image
+	for( int i = 0; i< contours.size(); i++ ){
+		double a=contourArea( contours[i],false);  //  Find the area of contour
+		if(a>largest_area){
+		largest_area=a;
+	    largest_contour_index=i;                //Store the index of largest contour
+	    }
+	}
+
+	drawContours( dst,contours, largest_contour_index, Scalar(255,255,255),CV_FILLED, 8, hierarchy );
+	vector<vector<Point> > contours_poly(1);
+	approxPolyDP( Mat(contours[largest_contour_index]), contours_poly[0],100, true );
+	Rect boundRect=boundingRect(contours[largest_contour_index]);
+	
+	if(contours_poly[0].size()==4){
+	    std::vector<Point2f> quad_pts;
+	    std::vector<Point2f> squre_pts;
+	    quad_pts.push_back(Point2f(contours_poly[0][0].x,contours_poly[0][0].y));
+	    quad_pts.push_back(Point2f(contours_poly[0][1].x,contours_poly[0][1].y));
+	    quad_pts.push_back(Point2f(contours_poly[0][3].x,contours_poly[0][3].y));
+	    quad_pts.push_back(Point2f(contours_poly[0][2].x,contours_poly[0][2].y));
+	    squre_pts.push_back(Point2f(boundRect.x,boundRect.y));
+	    squre_pts.push_back(Point2f(boundRect.x,boundRect.y+boundRect.height));
+	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y));
+	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y+boundRect.height));
+
+	    Mat transmtx = getPerspectiveTransform(quad_pts,squre_pts);
+	    Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
+	    warpPerspective(src, transformed, transmtx, src.size());
+	    Point P1=contours_poly[0][0];
+	    Point P2=contours_poly[0][1];
+	    Point P3=contours_poly[0][2];
+	    Point P4=contours_poly[0][3];
+
+	    line(src,P1,P2, Scalar(0,0,255),1,CV_AA,0);
+	    line(src,P2,P3, Scalar(0,0,255),1,CV_AA,0);
+	    line(src,P3,P4, Scalar(0,0,255),1,CV_AA,0);
+	    line(src,P4,P1, Scalar(0,0,255),1,CV_AA,0);
+	    rectangle(src,boundRect,Scalar(0,255,0),1,8,0);
+	    rectangle(transformed,boundRect,Scalar(0,255,0),1,8,0);
+
+	    imshow("quadrilateral", transformed);
+	    imshow("thr",thr);
+	    imshow("dst",dst);
+	    imshow("src",src);
+	    imwrite("data/result1.jpg",dst);
+	    imwrite("data/result2.jpg",src);
+	    imwrite("data/result3.jpg",transformed);
+	    waitKey();
+	}
+	else
+	{
+	    std::cout<<"Make sure that your are getting 4 corner using approxPolyDP..."<<std::endl;
+	}
+}
+
+void distortion()
+{
 	board_w = 7; // Board width in squares
 	board_h = 10; // Board height 
 	n_boards = 15; // Number of boards
@@ -95,7 +174,8 @@ int main() {
 			}
 		}
 		if( c == 27 )
-			return 0;
+			std::cout << "ERROR "<< std::endl;
+			break;
 		image = open_stream(width, height); // Get next image
 	} // End collection while loop
 
@@ -137,36 +217,33 @@ int main() {
 	//cvSave( "Intrinsics.xml", intrinsic_matrix );
 	//cvSave( "Distortion.xml", distortion_coeffs );
 	*/
+
 	// Example of loading these matrices back in
-	CvMat *intrinsic1 = (CvMat*)cvLoad( "data/kalibrate_inside/Intrinsics.xml" );
-	CvMat *distortion1 = (CvMat*)cvLoad( "data/kalibrate_inside/Distortion.xml" );
+	CvMat *intrinsic = (CvMat*)cvLoad( "data/kalibrate_inside/Intrinsics.xml" );
+	CvMat *distortion = (CvMat*)cvLoad( "data/kalibrate_inside/Distortion.xml" );
 	
-	CvMat *intrinsic2 = (CvMat*)cvLoad( "data/kalibrate_outside/Intrinsics.xml" );
-	CvMat *distortion2 = (CvMat*)cvLoad( "data/kalibrate_outside/Distortion.xml" );
-
 	// Build the undistort map that we will use for all subsequent frames
-	IplImage* mapx1 = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
-	IplImage* mapy1 = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
-	cvInitUndistortMap( intrinsic1, distortion1, mapx1, mapy1 );
-
-	IplImage* mapx2 = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
-	IplImage* mapy2 = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
-	cvInitUndistortMap( intrinsic2, distortion2, mapx2, mapy2 );
+	IplImage* mapx = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
+	IplImage* mapy = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
+	cvInitUndistortMap( intrinsic, distortion, mapx, mapy );
 
 	// Run the camera to the screen, now showing the raw and undistorted image
-	cvNamedWindow( "Undistort_inside" );
-	cvNamedWindow( "Undistort_outside" );
+	cvNamedWindow( "Undistort" );
 
 	while( image ){
 		IplImage *t1 = cvCloneImage( image );
-		IplImage *t2 = cvCloneImage( image );
+		IplImage *imageTemp = cvCloneImage( image );
 		cvShowImage( "Calibration", image ); // Show raw image
-		cvRemap( t1, image, mapx1, mapy1 ); // undistort image
+		
+		cvRemap( t1, image, mapx, mapy ); // undistort image
 		cvReleaseImage( &t1 );
-		cvShowImage( "Undistort_inside", image ); // Show corrected image
-		cvRemap( t2, image, mapx2, mapy2 ); // undistort image
-		cvReleaseImage( &t2 );
-		cvShowImage( "Undistort_outside", image ); // Show corrected image
+		cvShowImage( "Undistort", image ); // Show corrected image
+		if (char(key) == 32) { // Space saves the current image
+			std::cout << "pflaggi" << std::endl;
+			cvSaveImage("undistort.png", image);
+			cvSaveImage("distort.png", imageTemp);
+		}
+		cvReleaseImage( &imageTemp );
 
 		// Handle pause/unpause and esc
 		int c = cvWaitKey( 15 );
@@ -180,9 +257,36 @@ int main() {
 			break;
 		image = open_stream(width, height);
 	}
+}
 
-	return 0;
+void illuminationCorrection() {
+	// READ RGB color image and convert it to Lab
+    cv::Mat bgr_image = cv::imread("image.png");
+    cv::Mat lab_image;
+    cv::cvtColor(bgr_image, lab_image, CV_BGR2Lab);
 
+    // Extract the L channel
+    std::vector<cv::Mat> lab_planes(3);
+    cv::split(lab_image, lab_planes);  // now we have the L image in lab_planes[0]
+
+    // apply the CLAHE algorithm to the L channel
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+    clahe->setClipLimit(4);
+    cv::Mat dst;
+    clahe->apply(lab_planes[0], dst);
+
+    // Merge the the color planes back into an Lab image
+    dst.copyTo(lab_planes[0]);
+    cv::merge(lab_planes, lab_image);
+
+   // convert back to RGB
+   cv::Mat image_clahe;
+   cv::cvtColor(lab_image, image_clahe, CV_Lab2BGR);
+
+   // display the results  (you might also want to see lab_planes[0] before and after).
+   cv::imshow("image original", bgr_image);
+   cv::imshow("image CLAHE", image_clahe);
+   cv::waitKey();
 }
 
 void init_camera() {
@@ -194,7 +298,8 @@ void init_camera() {
 	}
 
 	g_cam = g_system->getCamera(0 /*the first camera*/, false /*use not rgb*/, true /*not fastest mode but full resolution*/);
-	
+	g_cam->setGain(6);
+
 	width = g_cam->getWidth();
 	height = g_cam->getHeight();
 }

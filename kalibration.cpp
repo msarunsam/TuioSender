@@ -47,6 +47,8 @@ void init_camera();
 IplImage* open_stream();
 void distortion();
 void illuminationCorrection();
+void illuminationCorrection2();
+void illuminationCorrection3();
 void perspectiveCorrection();
 
 int main() {
@@ -55,15 +57,10 @@ int main() {
 	init_camera();
 
 
-	IplImage* temp;
-	while (true)
-	{
-		temp = open_stream();
-		cvShowImage("Stream", temp);	
-	}
 	
-	//distortion();
-	//illuminationCorrection();
+
+	distortion();
+	//illuminationCorrection3();
 	//perspectiveCorrection();
 }
 
@@ -164,6 +161,7 @@ void distortion()
 
 	while( successes < n_boards ){
 		// Skp every board_dt frames to allow user to move chessboard
+		cvShowImage( "stream", image );
 		if( frame++ % board_dt == 0 ){
 			// Find chessboard corners:
 			int found = cvFindChessboardCorners( image, board_sz, corners,
@@ -194,7 +192,7 @@ void distortion()
 		} 
 
 		// Handle pause/unpause and ESC
-		int c = cvWaitKey( 15 );
+		int c = cvWaitKey( 50 );
 		if( c == 'p' ){
 			c = 0;
 			while( c != 'p' && c != 27 ){
@@ -289,6 +287,67 @@ void distortion()
 	}
 }
 
+void illuminationCorrection2(){
+
+	Mat img = imread("image.png", CV_LOAD_IMAGE_COLOR); //open and read the image
+
+
+	if (img.empty())
+	{
+	std::cout << "Image cannot be loaded..!!" << std::endl;
+	
+	}
+
+	Mat imgH;
+	img.convertTo(imgH, -1, 3, 0); //increase the contrast (double)
+
+	Mat imgL;
+	img.convertTo(imgL, -1, 0.5, 0); //decrease the contrast (halve)
+
+	//create windows
+	namedWindow("Original Image", CV_WINDOW_AUTOSIZE);
+	namedWindow("High Contrast", CV_WINDOW_AUTOSIZE);
+	namedWindow("Low Contrast", CV_WINDOW_AUTOSIZE);
+
+	//show the image
+	imshow("Original Image", img);
+	imshow("High Contrast", imgH);
+	imshow("Low Contrast", imgL);
+
+	waitKey(0); //wait for key press
+
+	destroyAllWindows(); //destroy all open windows
+}
+
+void illuminationCorrection3(){
+
+	Mat img = imread("image.png", CV_LOAD_IMAGE_COLOR); //open and read the image
+
+
+	if (img.empty())
+	{
+	std::cout << "Image cannot be loaded..!!" << std::endl;
+	
+	}
+	cvtColor(img, img, CV_BGR2GRAY); //change the color image to grayscale image
+
+	Mat img_hist_equalized;
+	equalizeHist(img, img_hist_equalized); //equalize the histogram
+
+	//create windows
+	namedWindow("Original Image", CV_WINDOW_AUTOSIZE);
+	namedWindow("Histogram Equalized", CV_WINDOW_AUTOSIZE);
+
+	//show the image
+	imshow("Original Image", img);
+	imshow("Histogram Equalized", img_hist_equalized);
+
+	waitKey(0); //wait for key press
+
+	destroyAllWindows(); //destroy all open windows
+
+}
+
 void illuminationCorrection() {
 	// READ RGB color image and convert it to Lab
     cv::Mat bgr_image = cv::imread("image.png");
@@ -317,6 +376,10 @@ void illuminationCorrection() {
    cv::imshow("image original", bgr_image);
    cv::imshow("image CLAHE", image_clahe);
    cv::waitKey();
+
+
+
+
 }
 
 void init_camera() {
@@ -373,7 +436,7 @@ void init_camera() {
 
 
     m_device->GetRemoteNode("Gain")->SetDouble(15.56);
-    m_device->GetRemoteNode("TriggerMode")->SetString("Off");
+    m_device->GetRemoteNode("TriggerMode")->SetString("On");
     m_device->GetRemoteNode("TriggerSource")->SetValue("Line0");
     m_device->GetRemoteNode("ExposureTime")->SetDouble(13000);
 

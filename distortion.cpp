@@ -32,15 +32,15 @@ void perspectiveCorrection();
 int main() {
 
 	// initialize baumer camera
-	//init_camera();
+	init_camera();
 
-	//distortion();
+	distortion();
 	//illuminationCorrection();
-	perspectiveCorrection();
-
+	//perspectiveCorrection();
 }
 
 void perspectiveCorrection() {
+	/*
 	Mat src=imread("image_work.png");
 	Mat thr;
 	cvtColor(src,thr,CV_BGR2GRAY);
@@ -77,10 +77,9 @@ void perspectiveCorrection() {
 	    squre_pts.push_back(Point2f(boundRect.x,boundRect.y+boundRect.height));
 	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y));
 	    squre_pts.push_back(Point2f(boundRect.x+boundRect.width,boundRect.y+boundRect.height));
-
-
+		
+		Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
 	    Mat transmtx = getPerspectiveTransform(quad_pts,squre_pts);
-	    Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
 
 	    //imwrite("data/perspectiveCorrection.png", transmtx);
 	    Mat perspectiveCorrection;
@@ -88,43 +87,22 @@ void perspectiveCorrection() {
 	    cv::FileStorage storage1("data/perspectiveCorrection.yml", cv::FileStorage::WRITE);
 	    storage1 << "transmtx" << transmtx;
 	    storage1.release();  
+	*/
+	Mat src=imread("image_work.png");
+    Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
+	Mat perspectiveCorrection;
 
-	    //Reading from file
+    //Reading from file
+    cv::FileStorage storage2("data/perspectiveCorrection.yml", cv::FileStorage::READ);
+    storage2["transmtx"] >> perspectiveCorrection;
+    storage2.release();
 
-	    cv::FileStorage storage2("data/perspectiveCorrection.yml", cv::FileStorage::READ);
-	    storage2["transmtx"] >> perspectiveCorrection;
-	    storage2.release();
+    warpPerspective(src, transformed, perspectiveCorrection, src.size());
+      
+    imshow("quadrilateral", transformed);
+    
+    waitKey();
 
-
-	    warpPerspective(src, transformed, perspectiveCorrection, src.size());
-	    
-
-
-	    Point P1=contours_poly[0][0];
-	    Point P2=contours_poly[0][1];
-	    Point P3=contours_poly[0][2];
-	    Point P4=contours_poly[0][3];
-
-	    line(src,P1,P2, Scalar(0,0,255),1,CV_AA,0);
-	    line(src,P2,P3, Scalar(0,0,255),1,CV_AA,0);
-	    line(src,P3,P4, Scalar(0,0,255),1,CV_AA,0);
-	    line(src,P4,P1, Scalar(0,0,255),1,CV_AA,0);
-	    rectangle(src,boundRect,Scalar(0,255,0),1,8,0);
-	    rectangle(transformed,boundRect,Scalar(0,255,0),1,8,0);
-
-	    imshow("quadrilateral", transformed);
-	    imshow("thr",thr);
-	    imshow("dst",dst);
-	    imshow("src",src);
-	    imwrite("data/result1.jpg",dst);
-	    imwrite("data/result2.jpg",src);
-	    imwrite("data/result3.jpg",transformed);
-	    waitKey();
-	}
-	else
-	{
-	    std::cout<<"Make sure that your are getting 4 corner using approxPolyDP..."<<std::endl;
-	}
 }
 
 void distortion()
@@ -152,7 +130,6 @@ void distortion()
 	IplImage *image = open_stream(width, height);
 	//IplImage *gray_image = cvCreateImage( cvSize( 1392,1044 ), 8, 1 );
 
-	/*
 	while( successes < n_boards ){
 		// Skp every board_dt frames to allow user to move chessboard
 		if( frame++ % board_dt == 0 ){
@@ -193,8 +170,10 @@ void distortion()
 			}
 		}
 		if( c == 27 )
+		{
 			std::cout << "ERROR "<< std::endl;
 			break;
+		}
 		image = open_stream(width, height); // Get next image
 	} // End collection while loop
 
@@ -235,7 +214,7 @@ void distortion()
 	// Save the intrinsics and distortions
 	//cvSave( "Intrinsics.xml", intrinsic_matrix );
 	//cvSave( "Distortion.xml", distortion_coeffs );
-	*/
+	
 
 	// Example of loading these matrices back in
 	CvMat *intrinsic = (CvMat*)cvLoad( "data/kalibrate_inside/Intrinsics.xml" );

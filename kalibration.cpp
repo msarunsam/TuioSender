@@ -161,7 +161,6 @@ void distortion()
 
 	while( successes < n_boards ){
 		// Skp every board_dt frames to allow user to move chessboard
-		cvShowImage( "stream", image );
 		if( frame++ % board_dt == 0 ){
 			// Find chessboard corners:
 			int found = cvFindChessboardCorners( image, board_sz, corners,
@@ -192,7 +191,7 @@ void distortion()
 		} 
 
 		// Handle pause/unpause and ESC
-		int c = cvWaitKey( 50 );
+		int c = cvWaitKey( 15 );
 		if( c == 'p' ){
 			c = 0;
 			while( c != 'p' && c != 27 ){
@@ -504,5 +503,7 @@ IplImage* open_stream() {
     cvCopy(frameTemp, m_frame, NULL);
     cvReleaseImageHeader(&frameTemp);
 
+    cvShowImage("Stream", m_frame);
+	key = cvWaitKey(100);
     return m_frame;
 }

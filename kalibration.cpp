@@ -1,6 +1,4 @@
-#include <BSystem.h>
-#include <BCamera.h>
-
+#include "bgapi2_genicam.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -11,20 +9,42 @@
 
 using namespace cv;
 
-baumer::BCamera* g_cam = 0;
-baumer::BSystem* g_system  = 0;
-
-int width = 696;
-int height = 524;
 char key;
 int n_boards = 0;
 const int board_dt = 20;
 int board_w;
 int board_h;
 
+
+int 					m_camWidth;
+int 					m_camHeight;
+
+CvSize 					m_imageSize(cvSize(696, 520));
+IplImage* 				m_frame(cvCreateImage(m_imageSize, IPL_DEPTH_8U, 1));
+
+BGAPI2::SystemList* 	m_systemList(NULL);
+BGAPI2::System* 		m_systemMem(NULL);
+BGAPI2::String 			m_systemID("");
+
+BGAPI2::InterfaceList*	m_interfaceList(NULL);
+BGAPI2::Interface* 		m_interface(NULL);
+BGAPI2::String			m_interfaceID("");
+
+BGAPI2::DeviceList*		m_deviceList(NULL);
+BGAPI2::Device*			m_device(NULL);
+BGAPI2::String			m_deviceID("");
+
+BGAPI2::DataStreamList*	m_datastreamList(NULL);
+BGAPI2::DataStream*		m_datastream(NULL);
+BGAPI2::String			m_datastreamID("");
+
+BGAPI2::BufferList*		m_bufferList(NULL);
+BGAPI2::Buffer*			m_buffer(NULL);
+
+
 // callbacks
 void init_camera();
-IplImage* open_stream(int width, int height);
+IplImage* open_stream();
 void distortion();
 void illuminationCorrection();
 void perspectiveCorrection();
@@ -34,7 +54,15 @@ int main() {
 	// initialize baumer camera
 	init_camera();
 
-	distortion();
+
+	IplImage* temp;
+	while (true)
+	{
+		temp = open_stream();
+		cvShowImage("Stream", temp);	
+	}
+	
+	//distortion();
 	//illuminationCorrection();
 	//perspectiveCorrection();
 }
@@ -131,7 +159,7 @@ void distortion()
 	int step, frame = 0;
 
 
-	IplImage *image = open_stream(width, height);
+	IplImage *image = open_stream();
 	//IplImage *gray_image = cvCreateImage( cvSize( 1392,1044 ), 8, 1 );
 
 	while( successes < n_boards ){
@@ -178,7 +206,7 @@ void distortion()
 			std::cout << "ERROR "<< std::endl;
 			break;
 		}
-		image = open_stream(width, height); // Get next image
+		image = open_stream(); // Get next image
 	} // End collection while loop
 
 	std::cout << "success!!!!!!" << std::endl;
@@ -216,13 +244,13 @@ void distortion()
 		intrinsic_matrix, distortion_coeffs, NULL, NULL, CV_CALIB_FIX_ASPECT_RATIO ); 
 
 	// Save the intrinsics and distortions
-	//cvSave( "Intrinsics.xml", intrinsic_matrix );
-	//cvSave( "Distortion.xml", distortion_coeffs );
+	cvSave( "Intrinsics.xml", intrinsic_matrix );
+	cvSave( "Distortion.xml", distortion_coeffs );
 	
 
 	// Example of loading these matrices back in
-	CvMat *intrinsic = (CvMat*)cvLoad( "data/kalibrate_inside/Intrinsics.xml" );
-	CvMat *distortion = (CvMat*)cvLoad( "data/kalibrate_inside/Distortion.xml" );
+	CvMat *intrinsic = (CvMat*)cvLoad( "Intrinsics.xml" );
+	CvMat *distortion = (CvMat*)cvLoad( "Distortion.xml" );
 	
 	// Build the undistort map that we will use for all subsequent frames
 	IplImage* mapx = cvCreateImage( cvGetSize( image ), IPL_DEPTH_32F, 1 );
@@ -257,7 +285,7 @@ void distortion()
 		}
 		if( c == 27 )
 			break;
-		image = open_stream(width, height);
+		image = open_stream();
 	}
 }
 
@@ -292,44 +320,126 @@ void illuminationCorrection() {
 }
 
 void init_camera() {
-	g_system = new baumer::BSystem;
-	g_system->init();
-	if(g_system->getNumCameras() == 0) {
-		std::cerr << "Error: no camera found" << std::endl;
-		return;
-	}
+	// SYSTEM  
+    m_systemList = BGAPI2::SystemList::GetInstance();
+    m_systemList->Refresh();
+    std::cout << "Detected systems: " << m_systemList->size() << std::endl;
 
-	g_cam = g_system->getCamera(0 /*the first camera*/, false /*use not rgb*/, true /*not fastest mode but full resolution*/);
-	g_cam->setGain(6);
+    m_systemList->begin()->second->Open();
+    m_systemID = m_systemList->begin()->first;
+    if(m_systemID == "") {
+        std::cout << "Error: no system found" << std::endl;
+    }
+    else {
+        m_systemMem = (*m_systemList)[m_systemID];
+        std::cout << "SystemID:  " << m_systemID << std::endl;
+    }
 
-	width = g_cam->getWidth();
-	height = g_cam->getHeight();
+    //INTERFACE
+    m_interfaceList = m_systemMem->GetInterfaces();
+    m_interfaceList->Refresh(100);
+    std::cout << "Detected interfaces: " << m_interfaceList->size() << std::endl;
+
+    for (BGAPI2::InterfaceList::iterator interfaceIter = m_interfaceList->begin(); interfaceIter != m_interfaceList->end(); interfaceIter++) {
+        interfaceIter->second->Open();
+        m_deviceList = interfaceIter->second->GetDevices();
+        m_deviceList->Refresh(100);
+
+        if (m_deviceList->size() > 0) {
+            std::cout << "Detected Devices: " << m_deviceList->size() << std::endl;
+            m_interfaceID = interfaceIter->first;
+            m_interface = interfaceIter->second;
+            break;
+        }
+        else {
+            interfaceIter->second->Close();
+        }
+    }
+
+    // DEVICE
+    m_device  = m_deviceList->begin()->second;
+    m_device->Open();
+    m_deviceID = m_deviceList->begin()->first;
+    if(m_deviceID == "") {
+        std::cout << "Error: no camera found" << std::endl;
+    }
+    else {
+        m_device = (*m_deviceList)[m_deviceID];
+        std::cout << "DeviceID: " << m_deviceID << std::endl;
+    }
+
+    // CONFIG
+    //Set camera features based on config file
+
+
+    m_device->GetRemoteNode("Gain")->SetDouble(15.56);
+    m_device->GetRemoteNode("TriggerMode")->SetString("Off");
+    m_device->GetRemoteNode("TriggerSource")->SetValue("Line0");
+    m_device->GetRemoteNode("ExposureTime")->SetDouble(13000);
+
+    //Set cam resolution to halve reolution [696, 520]
+    //std::cout << "1 " << m_device->GetRemoteNode("TriggerSource")->GetDescription()  << std::endl;
+    //std::cout << "2 " << m_device->GetRemoteNode("TriggerSource")->GetInterface()  << std::endl;
+    m_device->GetRemoteNode("BinningHorizontal")->SetInt( 2);
+    m_device->GetRemoteNode("BinningVertical")->SetInt( 2);
+
+    // GET CAM RESOLUTION
+    m_camWidth = m_device->GetRemoteNode("Width")->GetInt();
+    m_camHeight = m_device->GetRemoteNode("Height")->GetInt();
+    std::cout << "Cam resolution : " << m_camWidth << "  " <<  m_camHeight << std::endl;
+
+
+    // DATASTREAM
+    m_datastreamList = m_device->GetDataStreams();
+    m_datastreamList->Refresh();
+    std::cout << "Detected datastreams: " << m_datastreamList->size() << std::endl;
+
+    m_datastreamList->begin()->second->Open();
+    m_datastreamID = m_datastreamList->begin()->first;
+    if(m_datastreamID == "") {
+        std::cout << "Error: no datastream found" << std::endl;
+    }
+    else{
+        m_datastream = (*m_datastreamList)[m_datastreamID];
+        std::cout << "DatastreamID: " << m_datastreamID << std::endl;
+    }
+
+    // BUFFER
+    m_bufferList = m_datastream->GetBufferList();
+    for(int i=0; i<(4); i++) { // 4 buffers using internal buffers
+         m_buffer = new BGAPI2::Buffer();
+         m_bufferList->Add(m_buffer);
+    }
+    std::cout << "Announced buffers: " << m_bufferList->size() << std::endl;
+    for (BGAPI2::BufferList::iterator buf = m_bufferList->begin(); buf != m_bufferList->end(); buf++) {
+         buf->second->QueueBuffer();
+    }
+    std::cout << "Queued buffers: " << m_bufferList->GetQueuedCount() << std::endl;
+
+    // START DATASTREAM AND FILL BUFFER
+    m_datastream->StartAcquisitionContinuous();
+    m_device->GetRemoteNode("AcquisitionStart")->Execute();
+
 }
 
-IplImage* open_stream(int width, int height) {
-	while (g_cam->capture() == NULL) 
-	{
-		std::cout << "cam not initialized yet" << std::endl;
-		key = cvWaitKey(10);
-	}
+IplImage* open_stream() {
+	char* img = nullptr;
 
-	if (!g_cam->capture() == NULL) {
-		if (g_cam->capture() == NULL) {
-				std::cout << "Error: stream is empty" << std::endl;
-			
-		}
-		else {
-			// save the data stream in each frame
-			IplImage* frame = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, 1);
-			frame -> imageData = (char*) g_cam-> capture();
+    BGAPI2::Buffer* m_bufferFilled = NULL;
+    m_bufferFilled = m_datastream->GetFilledBuffer(1000);
+    if(m_bufferFilled == NULL){
+        std::cout << "Error: buffer timeout" << std::endl;
+    }
 
-			// show stream
-			cvShowImage("Stream", frame);
+    img = (char*)m_bufferFilled->GetMemPtr();
 
-	        key = cvWaitKey(100); // throws a segmentation fault (?)
-	        return frame;
-		}		
-	}
-	
-	return cvCreateImage( cvSize( 696, 524 ), 8, 1 ); 
+    m_bufferFilled->QueueBuffer();
+
+    IplImage* frameTemp = cvCreateImageHeader(cvSize(m_camWidth, m_camHeight), IPL_DEPTH_8U, 1);
+    cvSetData(frameTemp, img, m_camWidth);
+
+    cvCopy(frameTemp, m_frame, NULL);
+    cvReleaseImageHeader(&frameTemp);
+
+    return m_frame;
 }

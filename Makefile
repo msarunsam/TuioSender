@@ -15,11 +15,19 @@ TUIO_SHARED  = libTUIO.so
 OPENCV_STREAM = stream_or_pictures
 KALIBRATION_STREAM = kalibration
 
-INCLUDES = -I./tuio -I./oscpack -I/opt/boost/boost_1_55_0/include -Ipng++-0.2.3/ -I/opt/boost/boost_1_55_0/include -I./opencv-touch/src
-LDPATH = -L./opencv-touch/src -L/opt/boost/boost_1_55_0/lib
-LDFLAGS = -lBaumer -lrt -lboost_thread -ljpeg -lpng -lGL -lglut -lpthread -lbgapi \
+INCLUDES = -I./libbaumer/src/baumer/inc -I./tuio -I./oscpack -I/opt/boost/boost_1_55_0/include -Ipng++-0.2.3/ -I/opt/boost/boost_1_55_0/include -I./opencv-touch/src
+LDPATH = -L./opencv-touch/src -L/opt/boost/boost_1_55_0/lib -L/usr/local/lib/baumer
+LDFLAGS = -lbgapi2_ext \
+          -lbgapi2_genicam \
+          -lbgapi2_img \
+          -lcamera_tools \
+          -levisionlib \
+          -limage_tools \
+          -lMathParser \
+          -lrt -lboost_thread -ljpeg -lpng -lGL -lglut -lpthread -lbgapi \
           -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_imgproc -lopencv_video -lboost_system \
           -lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_objdetect
+          
 
 
 

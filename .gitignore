@@ -25,6 +25,7 @@ TUIOSender
 stream_or_pictures
 distortion
 IlluminationCorrection
+kalibration
 
 # Images
 *.png

@@ -87,6 +87,10 @@ void perspectiveCorrection() {
 	    cv::FileStorage storage1("data/perspectiveCorrection.yml", cv::FileStorage::WRITE);
 	    storage1 << "transmtx" << transmtx;
 	    storage1.release();  
+	} else
+	{
+    	cout << "Make sure that your are getting 4 corner using approxPolyDP..." << endl;	
+	}
 	*/
 	Mat src=imread("image_work.png");
     Mat transformed = Mat::zeros(src.rows, src.cols, CV_8UC3);
@@ -320,7 +324,7 @@ IplImage* open_stream(int width, int height) {
 			frame -> imageData = (char*) g_cam-> capture();
 
 			// show stream
-			//cvShowImage("Stream", frame);
+			cvShowImage("Stream", frame);
 
 	        key = cvWaitKey(100); // throws a segmentation fault (?)
 	        return frame;
